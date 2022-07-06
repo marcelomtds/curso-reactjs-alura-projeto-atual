@@ -1,89 +1,60 @@
-import { Button, FormControlLabel, Switch, TextField } from '@material-ui/core';
-import { useState } from 'react';
+import { Step, StepLabel, Stepper, Typography } from '@material-ui/core';
+import { Fragment, useEffect, useState } from 'react';
+import DadosEntrega from './DadosEntrega';
+import DadosPessoais from './DadosPessoais';
+import DadosUsuario from './DadosUsuario';
 
-function FormularioCadastro({ aoEnviar, validarCPF }) {
+function FormularioCadastro({ aoEnviar }) {
 
-    const [nome, setNome] = useState("");
-    const [sobrenome, setSobrenome] = useState("");
-    const [cpf, setCpf] = useState("");
-    const [promocoes, setPromocoes] = useState(true);
-    const [novidades, setNovidades] = useState(false);
+    const [etapaAtual, setEtapaAtual] = useState(0);
+    const [dadosColetados, setDadosColetados] = useState({});
 
-    const [erros, setErros] = useState({ cpf: { valido: true, texto: "" } });
+    useEffect(() => {
+        if (etapaAtual === formularios.length - 1) {
+            aoEnviar(dadosColetados);
+        }
+    });
+
+    const formularios = [
+        <DadosUsuario aoEnviar={coletarDados} />,
+        <DadosPessoais aoEnviar={coletarDados} />,
+        <DadosEntrega aoEnviar={coletarDados} />,
+        <Typography variant="h5">Obrigado pelo cadastro</Typography>
+    ]
+
+    function coletarDados(dados) {
+        setDadosColetados({ ...dadosColetados, ...dados });
+        proximo();
+    }
+
+    function proximo() {
+        setEtapaAtual(etapaAtual + 1);
+    }
 
     return (
-        <form onSubmit={event => {
-            event.preventDefault();
-            aoEnviar({ nome, sobrenome, cpf, promocoes, novidades })
-        }}>
-            <TextField
-                value={nome}
-                onChange={event => setNome(maxLength(event.target.value, 20))}
-                id="nome"
-                label="Nome"
-                variant="outlined"
-                margin="normal"
-                fullWidth />
-
-            <TextField
-                value={sobrenome}
-                onChange={event => setSobrenome(maxLength(event.target.value, 30))}
-                id="sobrenome"
-                label="Sobrenome"
-                variant="outlined"
-                margin="normal"
-                fullWidth />
-
-            <TextField
-                value={cpf}
-                onChange={event => {
-                    setCpf(formatarCPF(event.target.value));
-                }}
-                onBlur={() => setErros({ cpf: validarCPF(cpf) })}
-                error={!erros.cpf.valido}
-                helperText={erros.cpf.texto}
-                id="cpf"
-                label="CPF"
-                variant="outlined"
-                margin="normal"
-                fullWidth />
-
-            <FormControlLabel
-                label="Promoções"
-                control={
-                    <Switch
-                        checked={promocoes}
-                        onChange={event => setPromocoes(event.target.checked)}
-                        name="promocoes"
-                        color="primary" />
-                } />
-
-            <FormControlLabel
-                label="Novidades"
-                control={
-                    <Switch
-                        checked={novidades}
-                        onChange={event => setNovidades(event.target.checked)}
-                        name="novidades"
-                        color="primary" />
-                } />
-
-            <Button
-                type="submit"
-                variant="contained"
-                color="primary">
-                Cadastrar
-            </Button>
-        </form >
+        //o Fragment não é renderizado, nesse caso serve apenas para agrupar os elementos filhos e retornar um elemento pai
+        < Fragment >
+            <Stepper activeStep={etapaAtual}>
+                <Step>
+                    <StepLabel>Login</StepLabel>
+                </Step>
+                <Step>
+                    <StepLabel>Pessoal</StepLabel>
+                </Step>
+                <Step>
+                    <StepLabel>Entrega</StepLabel>
+                </Step>
+                <Step>
+                    <StepLabel>Finalização</StepLabel>
+                </Step>
+            </Stepper>
+            {
+                formularios[etapaAtual]
+            }
+        </Fragment >
     );
+
 }
 
-function formatarCPF(cpf) {
-    return maxLength(cpf.replace(/\D/g, ""), 11);
-}
-
-function maxLength(value, length) {
-    return value.slice(0, length);
-}
 
 export default FormularioCadastro;
